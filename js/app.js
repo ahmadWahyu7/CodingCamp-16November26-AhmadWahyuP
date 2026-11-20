@@ -15,7 +15,7 @@ function safeSet(key, value) {
   try {
     localStorage.setItem(key, value);
   } catch {
-    console.warn('localStorage tidak tersedia. Data tidak disimpan.');
+    console.warn("localStorage tidak tersedia. Data tidak disimpan.");
   }
 }
 
@@ -28,16 +28,45 @@ const GreetingModule = {
   _intervalId: null,
   _watchdogId: null,
   _lastTickTime: null,
-  _name: '',             // cached username, populated by loadName()
+  _name: "", // cached username, populated by loadName()
 
   // ---- public API ----
 
   init() {
-    this.loadName();      // read and cache persisted name
-    this.startClock();    // start ticking immediately
+    this.loadName(); // read and cache persisted name
+    this.startClock(); // start ticking immediately
     this.startWatchdog(); // monitor clock health
     this.renderGreeting();
-    this._bindEvents();   // wire up save button and Enter key
+    this._bindEvents(); // wire up name dialog events
+
+    // Tampilkan dialog jika belum ada nama tersimpan
+    if (!this._name) {
+      this.openNameDialog();
+    }
+  },
+
+  openNameDialog() {
+    const dialog = document.getElementById("name-dialog");
+    const input = document.getElementById("name-input");
+    const title = document.getElementById("name-dialog-title");
+    const cancelBtn = document.getElementById("name-cancel-btn");
+
+    if (!dialog || !input) return;
+
+    // Isi dengan nama yang tersimpan
+    input.value = this._name;
+
+    // Sesuaikan judul dan tombol
+    if (title) {
+      title.textContent = this._name ? "Ubah Nama" : "Selamat Datang!";
+    }
+
+    if (cancelBtn) {
+      cancelBtn.classList.toggle("hidden", !this._name);
+    }
+
+    dialog.showModal();
+    input.focus();
   },
 
   startClock() {
@@ -50,12 +79,15 @@ const GreetingModule = {
 
   startWatchdog() {
     this._watchdogId = setInterval(() => {
-      const errorEl = document.getElementById('clock-error');
+      const errorEl = document.getElementById("clock-error");
       if (!errorEl) return;
-      if (this._lastTickTime !== null && Date.now() - this._lastTickTime > 2000) {
-        errorEl.classList.remove('hidden');
+      if (
+        this._lastTickTime !== null &&
+        Date.now() - this._lastTickTime > 2000
+      ) {
+        errorEl.classList.remove("hidden");
       } else {
-        errorEl.classList.add('hidden');
+        errorEl.classList.add("hidden");
       }
     }, 3000);
   },
@@ -63,8 +95,8 @@ const GreetingModule = {
   updateDisplay(date) {
     this._lastTickTime = Date.now();
 
-    const timeEl = document.getElementById('clock-display');
-    const dateEl = document.getElementById('date-display');
+    const timeEl = document.getElementById("clock-display");
+    const dateEl = document.getElementById("date-display");
 
     if (timeEl) timeEl.textContent = this.formatTime(date);
     if (dateEl) dateEl.textContent = this.formatDate(date);
@@ -78,7 +110,7 @@ const GreetingModule = {
    * @returns {string}
    */
   formatTime(date) {
-    const pad = (n) => String(n).padStart(2, '0');
+    const pad = (n) => String(n).padStart(2, "0");
     return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
   },
 
@@ -88,11 +120,11 @@ const GreetingModule = {
    * @returns {string}
    */
   formatDate(date) {
-    return date.toLocaleDateString('id-ID', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
+    return date.toLocaleDateString("id-ID", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     });
   },
 
@@ -105,7 +137,7 @@ const GreetingModule = {
    */
   saveName(name) {
     const trimmed = name.trim();
-    safeSet('tl_username', trimmed);
+    safeSet("tl_username", trimmed);
     this._name = trimmed;
   },
 
@@ -114,30 +146,66 @@ const GreetingModule = {
    * Falls back to empty string if nothing is stored.
    */
   loadName() {
-    this._name = safeGet('tl_username', '').trim();
+    this._name = safeGet("tl_username", "").trim();
   },
 
   /**
    * Wires up the save button (click) and name input (Enter key).
    * Called once from init().
    */
+
   _bindEvents() {
-    const input = document.getElementById('name-input');
-    const btn   = document.getElementById('name-save-btn');
+    const dialog = document.getElementById("name-dialog");
+    const form = document.getElementById("name-form");
+    const input = document.getElementById("name-input");
+    const changeBtn = document.getElementById("change-name-btn");
+    const cancelBtn = document.getElementById("name-cancel-btn");
 
-    if (!input || !btn) return;
+    if (!dialog || !form || !input) return;
 
-    // Pre-fill input with the currently saved name
-    input.value = this._name;
+    // Tombol Ubah Nama
+    if (changeBtn) {
+      changeBtn.addEventListener("click", () => {
+        this.openNameDialog();
+      });
+    }
 
-    const handleSave = () => {
-      this.saveName(input.value);
+    // Tombol Batal
+    if (cancelBtn) {
+      cancelBtn.addEventListener("click", () => {
+        dialog.close();
+      });
+    }
+
+    // Simpan nama
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const name = input.value.trim();
+
+      if (!name) {
+        input.setCustomValidity("Nama tidak boleh kosong.");
+        input.reportValidity();
+        return;
+      }
+
+      input.setCustomValidity("");
+
+      this.saveName(name);
       this.renderGreeting();
-    };
+      dialog.close();
+    });
 
-    btn.addEventListener('click', handleSave);
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') handleSave();
+    // Hapus pesan validasi ketika pengguna mengetik
+    input.addEventListener("input", () => {
+      input.setCustomValidity("");
+    });
+
+    // Cegah dialog ditutup saat nama pertama belum diisi
+    dialog.addEventListener("cancel", (e) => {
+      if (!this._name) {
+        e.preventDefault();
+      }
     });
   },
 
@@ -151,17 +219,17 @@ const GreetingModule = {
     if (
       hour === null ||
       hour === undefined ||
-      typeof hour !== 'number' ||
+      typeof hour !== "number" ||
       !Number.isInteger(hour) ||
       hour < 0 ||
       hour > 23
     ) {
-      return 'Selamat Datang';
+      return "Selamat Datang";
     }
-    if (hour >= 5 && hour <= 11) return 'Selamat Pagi';
-    if (hour >= 12 && hour <= 14) return 'Selamat Siang';
-    if (hour >= 15 && hour <= 17) return 'Selamat Sore';
-    return 'Selamat Malam'; // 18–23 and 0–4
+    if (hour >= 5 && hour <= 11) return "Selamat Pagi";
+    if (hour >= 12 && hour <= 14) return "Selamat Siang";
+    if (hour >= 15 && hour <= 17) return "Selamat Sore";
+    return "Selamat Malam"; // 18–23 and 0–4
   },
 
   /**
@@ -170,7 +238,7 @@ const GreetingModule = {
    * Reads from the cached _name rather than hitting localStorage every tick.
    */
   renderGreeting() {
-    const el = document.getElementById('greeting-text');
+    const el = document.getElementById("greeting-text");
     if (!el) return;
 
     let hour;
@@ -181,7 +249,7 @@ const GreetingModule = {
     }
 
     const greeting = this.getGreeting(hour);
-    const name = this._name || '';
+    const name = this._name || "";
     el.textContent = name ? `${greeting}, ${name}!` : `${greeting}!`;
   },
 };
@@ -211,7 +279,7 @@ const TimerModule = {
    * Falls back to 25 if the stored value is missing, non-numeric, or outside 1–120.
    */
   loadDuration() {
-    const raw = safeGet('tl_timer_duration', null);
+    const raw = safeGet("tl_timer_duration", null);
     const parsed = parseInt(raw, 10);
     this.activeDurationMinutes =
       Number.isInteger(parsed) && parsed >= 1 && parsed <= 120 ? parsed : 25;
@@ -222,7 +290,7 @@ const TimerModule = {
    * Called by stop(), reset(), and onComplete() to survive page reloads.
    */
   saveRemaining() {
-    safeSet('tl_timer_remaining', String(this.remainingSeconds));
+    safeSet("tl_timer_remaining", String(this.remainingSeconds));
   },
 
   /**
@@ -234,7 +302,7 @@ const TimerModule = {
    */
   loadRemaining() {
     const max = this.activeDurationMinutes * 60;
-    const raw = safeGet('tl_timer_remaining', null);
+    const raw = safeGet("tl_timer_remaining", null);
     if (raw === null) return max;
     const parsed = parseInt(raw, 10);
     if (!Number.isInteger(parsed) || parsed < 0) return max;
@@ -251,15 +319,15 @@ const TimerModule = {
    * @param {number} minutes
    */
   saveDuration(minutes) {
-    const errorEl = document.getElementById('timer-duration-error');
+    const errorEl = document.getElementById("timer-duration-error");
 
     if (!Number.isInteger(minutes) || minutes < 1 || minutes > 120) {
-      if (errorEl) errorEl.classList.remove('hidden');
+      if (errorEl) errorEl.classList.remove("hidden");
       return;
     }
 
-    if (errorEl) errorEl.classList.add('hidden');
-    safeSet('tl_timer_duration', String(minutes));
+    if (errorEl) errorEl.classList.add("hidden");
+    safeSet("tl_timer_duration", String(minutes));
 
     if (this.intervalId !== null) {
       // Timer is running — defer until reset or completion
@@ -281,7 +349,7 @@ const TimerModule = {
     const totalSeconds = Math.max(0, Math.floor(seconds));
     const mm = Math.floor(totalSeconds / 60);
     const ss = totalSeconds % 60;
-    const pad = (n) => String(n).padStart(2, '0');
+    const pad = (n) => String(n).padStart(2, "0");
     return `${pad(mm)}:${pad(ss)}`;
   },
 
@@ -289,7 +357,7 @@ const TimerModule = {
    * Writes the formatted remaining time to #timer-display.
    */
   updateDisplay() {
-    const el = document.getElementById('timer-display');
+    const el = document.getElementById("timer-display");
     if (el) el.textContent = this.formatMMSS(this.remainingSeconds);
   },
 
@@ -359,8 +427,8 @@ const TimerModule = {
     this.setButtonState(false);
     this.saveRemaining();
 
-    const notification = document.getElementById('timer-complete-notification');
-    if (notification) notification.classList.remove('hidden');
+    const notification = document.getElementById("timer-complete-notification");
+    if (notification) notification.classList.remove("hidden");
   },
 
   /**
@@ -369,11 +437,11 @@ const TimerModule = {
    * @param {boolean} isRunning
    */
   setButtonState(isRunning) {
-    const startBtn = document.getElementById('timer-start-btn');
+    const startBtn = document.getElementById("timer-start-btn");
     if (!startBtn) return;
     startBtn.disabled = isRunning;
-    startBtn.classList.toggle('opacity-50', isRunning);
-    startBtn.classList.toggle('cursor-not-allowed', isRunning);
+    startBtn.classList.toggle("opacity-50", isRunning);
+    startBtn.classList.toggle("cursor-not-allowed", isRunning);
   },
 
   /**
@@ -382,21 +450,23 @@ const TimerModule = {
    * Called once from init().
    */
   _bindEvents() {
-    const startBtn       = document.getElementById('timer-start-btn');
-    const stopBtn        = document.getElementById('timer-stop-btn');
-    const resetBtn       = document.getElementById('timer-reset-btn');
-    const dismissBtn     = document.getElementById('timer-dismiss-btn');
-    const saveDurBtn     = document.getElementById('timer-save-duration-btn');
-    const durationInput  = document.getElementById('timer-duration-input');
+    const startBtn = document.getElementById("timer-start-btn");
+    const stopBtn = document.getElementById("timer-stop-btn");
+    const resetBtn = document.getElementById("timer-reset-btn");
+    const dismissBtn = document.getElementById("timer-dismiss-btn");
+    const saveDurBtn = document.getElementById("timer-save-duration-btn");
+    const durationInput = document.getElementById("timer-duration-input");
 
-    if (startBtn)   startBtn.addEventListener('click',   () => this.start());
-    if (stopBtn)    stopBtn.addEventListener('click',    () => this.stop());
-    if (resetBtn)   resetBtn.addEventListener('click',   () => this.reset());
+    if (startBtn) startBtn.addEventListener("click", () => this.start());
+    if (stopBtn) stopBtn.addEventListener("click", () => this.stop());
+    if (resetBtn) resetBtn.addEventListener("click", () => this.reset());
 
     if (dismissBtn) {
-      dismissBtn.addEventListener('click', () => {
-        const notification = document.getElementById('timer-complete-notification');
-        if (notification) notification.classList.add('hidden');
+      dismissBtn.addEventListener("click", () => {
+        const notification = document.getElementById(
+          "timer-complete-notification",
+        );
+        if (notification) notification.classList.add("hidden");
       });
     }
 
@@ -406,10 +476,10 @@ const TimerModule = {
       this.saveDuration(minutes);
     };
 
-    if (saveDurBtn) saveDurBtn.addEventListener('click', handleSaveDuration);
+    if (saveDurBtn) saveDurBtn.addEventListener("click", handleSaveDuration);
     if (durationInput) {
-      durationInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleSaveDuration();
+      durationInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") handleSaveDuration();
       });
     }
   },
@@ -430,7 +500,7 @@ const TodoModule = {
    * @returns {Array}
    */
   loadTasks() {
-    const raw = safeGet('tl_tasks', '[]');
+    const raw = safeGet("tl_tasks", "[]");
     try {
       const parsed = JSON.parse(raw);
       return Array.isArray(parsed) ? parsed : [];
@@ -443,7 +513,7 @@ const TodoModule = {
    * Persists the current task list to localStorage.
    */
   saveTasks() {
-    safeSet('tl_tasks', JSON.stringify(this.tasks));
+    safeSet("tl_tasks", JSON.stringify(this.tasks));
   },
 
   /**
@@ -457,37 +527,45 @@ const TodoModule = {
    * @returns {HTMLLIElement}
    */
   renderTask(task) {
-    const li = document.createElement('li');
-    li.className = 'flex items-center gap-2 p-2 rounded-lg bg-white/30 dark:bg-white/10';
+    const li = document.createElement("li");
+    li.className =
+      "flex items-center gap-2 p-2 rounded-lg bg-white/30 dark:bg-white/10";
 
     // Toggle button
-    const toggleBtn = document.createElement('button');
-    toggleBtn.dataset.action = 'toggle';
+    const toggleBtn = document.createElement("button");
+    toggleBtn.dataset.action = "toggle";
     toggleBtn.dataset.id = task.id;
-    toggleBtn.className = 'min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg font-semibold';
-    toggleBtn.setAttribute('aria-label', task.done ? 'Tandai belum selesai' : 'Tandai selesai');
-    toggleBtn.textContent = task.done ? '✅' : '⬜';
+    toggleBtn.className =
+      "min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg font-semibold";
+    toggleBtn.setAttribute(
+      "aria-label",
+      task.done ? "Tandai belum selesai" : "Tandai selesai",
+    );
+    toggleBtn.textContent = task.done ? "✅" : "⬜";
 
     // Task text
-    const span = document.createElement('span');
-    span.className = 'flex-1 break-words' + (task.done ? ' line-through opacity-60' : '');
+    const span = document.createElement("span");
+    span.className =
+      "flex-1 break-words" + (task.done ? " line-through opacity-60" : "");
     span.textContent = task.text;
 
     // Edit button
-    const editBtn = document.createElement('button');
-    editBtn.dataset.action = 'edit';
+    const editBtn = document.createElement("button");
+    editBtn.dataset.action = "edit";
     editBtn.dataset.id = task.id;
-    editBtn.className = 'min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg font-semibold';
-    editBtn.setAttribute('aria-label', 'Edit tugas');
-    editBtn.textContent = '✏️';
+    editBtn.className =
+      "min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg font-semibold";
+    editBtn.setAttribute("aria-label", "Edit tugas");
+    editBtn.textContent = "✏️";
 
     // Delete button
-    const deleteBtn = document.createElement('button');
-    deleteBtn.dataset.action = 'delete';
+    const deleteBtn = document.createElement("button");
+    deleteBtn.dataset.action = "delete";
     deleteBtn.dataset.id = task.id;
-    deleteBtn.className = 'min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg font-semibold';
-    deleteBtn.setAttribute('aria-label', 'Hapus tugas');
-    deleteBtn.textContent = '🗑️';
+    deleteBtn.className =
+      "min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg font-semibold";
+    deleteBtn.setAttribute("aria-label", "Hapus tugas");
+    deleteBtn.textContent = "🗑️";
 
     li.appendChild(toggleBtn);
     li.appendChild(span);
@@ -501,10 +579,10 @@ const TodoModule = {
    * Clears #todo-list and re-renders every task in this.tasks.
    */
   renderAll() {
-    const list = document.getElementById('todo-list');
+    const list = document.getElementById("todo-list");
     if (!list) return;
 
-    list.innerHTML = '';
+    list.innerHTML = "";
     this.tasks.forEach((task) => {
       list.appendChild(this.renderTask(task));
     });
@@ -518,19 +596,19 @@ const TodoModule = {
    * @param {string} text
    */
   addTask(text) {
-    const trimmed = typeof text === 'string' ? text.trim() : '';
-    const warningEl = document.getElementById('todo-empty-warning');
-    const inputEl   = document.getElementById('todo-input');
+    const trimmed = typeof text === "string" ? text.trim() : "";
+    const warningEl = document.getElementById("todo-empty-warning");
+    const inputEl = document.getElementById("todo-input");
 
-    if (trimmed === '') {
-      if (warningEl) warningEl.classList.remove('hidden');
+    if (trimmed === "") {
+      if (warningEl) warningEl.classList.remove("hidden");
       return;
     }
 
     const task = {
-      id:        Date.now().toString(),
-      text:      trimmed,
-      done:      false,
+      id: Date.now().toString(),
+      text: trimmed,
+      done: false,
       createdAt: Date.now(),
     };
 
@@ -538,8 +616,8 @@ const TodoModule = {
     this.saveTasks();
     this.renderAll();
 
-    if (inputEl)   inputEl.value = '';
-    if (warningEl) warningEl.classList.add('hidden');
+    if (inputEl) inputEl.value = "";
+    if (warningEl) warningEl.classList.add("hidden");
   },
 
   // ---- task actions (6.4) ----
@@ -563,15 +641,15 @@ const TodoModule = {
    * @param {string} newText
    */
   editTask(id, newText) {
-    const trimmed = typeof newText === 'string' ? newText.trim() : '';
-    const warningEl = document.getElementById('todo-empty-warning');
+    const trimmed = typeof newText === "string" ? newText.trim() : "";
+    const warningEl = document.getElementById("todo-empty-warning");
 
-    if (trimmed === '') {
-      if (warningEl) warningEl.classList.remove('hidden');
+    if (trimmed === "") {
+      if (warningEl) warningEl.classList.remove("hidden");
       return;
     }
 
-    if (warningEl) warningEl.classList.add('hidden');
+    if (warningEl) warningEl.classList.add("hidden");
 
     const task = this.tasks.find((t) => t.id === id);
     if (!task) return;
@@ -598,42 +676,44 @@ const TodoModule = {
    * @param {HTMLLIElement} li
    */
   _enterEditMode(id, li) {
-    const span = li.querySelector('span');
+    const span = li.querySelector("span");
     if (!span) return;
 
     const currentText = span.textContent;
 
     // Build inline input
-    const input = document.createElement('input');
-    input.type = 'text';
+    const input = document.createElement("input");
+    input.type = "text";
     input.value = currentText;
-    input.className = 'flex-1 rounded-lg px-2 py-1 text-sm bg-white/70 dark:bg-white/20 border border-current outline-none';
-    input.setAttribute('aria-label', 'Edit teks tugas');
+    input.className =
+      "flex-1 rounded-lg px-2 py-1 text-sm bg-white/70 dark:bg-white/20 border border-current outline-none";
+    input.setAttribute("aria-label", "Edit teks tugas");
 
     // Confirm button
-    const confirmBtn = document.createElement('button');
-    confirmBtn.textContent = '💾';
-    confirmBtn.className = 'min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg font-semibold';
-    confirmBtn.setAttribute('aria-label', 'Simpan perubahan');
-    confirmBtn.dataset.action = 'confirm-edit';
+    const confirmBtn = document.createElement("button");
+    confirmBtn.textContent = "💾";
+    confirmBtn.className =
+      "min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg font-semibold";
+    confirmBtn.setAttribute("aria-label", "Simpan perubahan");
+    confirmBtn.dataset.action = "confirm-edit";
     confirmBtn.dataset.id = id;
 
     const handleConfirm = () => {
       const value = input.value;
-      if (value.trim() === '') {
+      if (value.trim() === "") {
         // Show warning but keep the input open
-        const warningEl = document.getElementById('todo-empty-warning');
-        if (warningEl) warningEl.classList.remove('hidden');
+        const warningEl = document.getElementById("todo-empty-warning");
+        if (warningEl) warningEl.classList.remove("hidden");
         input.focus();
         return;
       }
       this.editTask(id, value);
     };
 
-    confirmBtn.addEventListener('click', handleConfirm);
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') handleConfirm();
-      if (e.key === 'Escape') this.renderAll(); // cancel edit
+    confirmBtn.addEventListener("click", handleConfirm);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleConfirm();
+      if (e.key === "Escape") this.renderAll(); // cancel edit
     });
 
     // Replace span with input + confirm button (insert before edit button)
@@ -642,7 +722,7 @@ const TodoModule = {
     li.insertBefore(confirmBtn, editBtn);
 
     // Hide the original edit button while in edit mode
-    if (editBtn) editBtn.style.display = 'none';
+    if (editBtn) editBtn.style.display = "none";
 
     input.focus();
     input.select();
@@ -656,25 +736,25 @@ const TodoModule = {
    * Called once from init().
    */
   _bindEvents() {
-    const list     = document.getElementById('todo-list');
-    const inputEl  = document.getElementById('todo-input');
-    const addBtn   = document.getElementById('todo-add-btn');
+    const list = document.getElementById("todo-list");
+    const inputEl = document.getElementById("todo-input");
+    const addBtn = document.getElementById("todo-add-btn");
 
     if (list) {
-      list.addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-action]');
+      list.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-action]");
         if (!btn) return;
 
         const action = btn.dataset.action;
         const id = btn.dataset.id;
 
-        if (action === 'toggle') {
+        if (action === "toggle") {
           this.toggleTask(id);
-        } else if (action === 'edit') {
+        } else if (action === "edit") {
           // Enter inline edit mode — do NOT call editTask directly
-          const li = btn.closest('li');
+          const li = btn.closest("li");
           if (li) this._enterEditMode(id, li);
-        } else if (action === 'delete') {
+        } else if (action === "delete") {
           this.deleteTask(id);
         }
         // 'confirm-edit' is handled by its own listener inside _enterEditMode
@@ -682,9 +762,9 @@ const TodoModule = {
     }
 
     if (addBtn && inputEl) {
-      addBtn.addEventListener('click', () => this.addTask(inputEl.value));
-      inputEl.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') this.addTask(inputEl.value);
+      addBtn.addEventListener("click", () => this.addTask(inputEl.value));
+      inputEl.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") this.addTask(inputEl.value);
       });
     }
   },
@@ -712,7 +792,10 @@ const LinksModule = {
    * @returns {string}
    */
   _generateId() {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    if (
+      typeof crypto !== "undefined" &&
+      typeof crypto.randomUUID === "function"
+    ) {
       return crypto.randomUUID();
     }
     return Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -726,7 +809,7 @@ const LinksModule = {
    * @returns {Array}
    */
   loadLinks() {
-    const raw = safeGet('tl_links', '[]');
+    const raw = safeGet("tl_links", "[]");
     try {
       const parsed = JSON.parse(raw);
       return Array.isArray(parsed) ? parsed : [];
@@ -739,7 +822,7 @@ const LinksModule = {
    * Persists the current link list to localStorage.
    */
   saveLinks() {
-    safeSet('tl_links', JSON.stringify(this.links));
+    safeSet("tl_links", JSON.stringify(this.links));
   },
 
   // ---- rendering ----
@@ -753,22 +836,25 @@ const LinksModule = {
    * @returns {HTMLDivElement}
    */
   renderLink(link) {
-    const card = document.createElement('div');
-    card.className = 'flex items-center justify-between gap-2 p-3 rounded-lg bg-white/30 dark:bg-white/10';
+    const card = document.createElement("div");
+    card.className =
+      "flex items-center justify-between gap-2 p-3 rounded-lg bg-white/30 dark:bg-white/10";
 
-    const anchor = document.createElement('a');
+    const anchor = document.createElement("a");
     anchor.href = link.url;
-    anchor.target = '_blank';
-    anchor.rel = 'noopener noreferrer';
+    anchor.target = "_blank";
+    anchor.rel = "noopener noreferrer";
     anchor.textContent = link.name;
-    anchor.className = 'flex-1 truncate font-semibold underline underline-offset-2';
+    anchor.className =
+      "flex-1 truncate font-semibold underline underline-offset-2";
 
-    const deleteBtn = document.createElement('button');
-    deleteBtn.dataset.action = 'delete';
+    const deleteBtn = document.createElement("button");
+    deleteBtn.dataset.action = "delete";
     deleteBtn.dataset.id = link.id;
-    deleteBtn.className = 'min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg font-semibold';
-    deleteBtn.setAttribute('aria-label', 'Hapus pintasan');
-    deleteBtn.textContent = '🗑️';
+    deleteBtn.className =
+      "min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg font-semibold";
+    deleteBtn.setAttribute("aria-label", "Hapus pintasan");
+    deleteBtn.textContent = "🗑️";
 
     card.appendChild(anchor);
     card.appendChild(deleteBtn);
@@ -780,10 +866,10 @@ const LinksModule = {
    * Clears #link-list and re-renders every link in this.links.
    */
   renderAll() {
-    const list = document.getElementById('link-list');
+    const list = document.getElementById("link-list");
     if (!list) return;
 
-    list.innerHTML = '';
+    list.innerHTML = "";
     this.links.forEach((link) => {
       list.appendChild(this.renderLink(link));
     });
@@ -799,8 +885,8 @@ const LinksModule = {
    * @returns {string}
    */
   normalizeUrl(url) {
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      return 'https://' + url;
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      return "https://" + url;
     }
     return url;
   },
@@ -815,15 +901,15 @@ const LinksModule = {
    * @param {string} url
    */
   addLink(name, url) {
-    const warningEl    = document.getElementById('link-warning');
-    const nameInputEl  = document.getElementById('link-name-input');
-    const urlInputEl   = document.getElementById('link-url-input');
+    const warningEl = document.getElementById("link-warning");
+    const nameInputEl = document.getElementById("link-name-input");
+    const urlInputEl = document.getElementById("link-url-input");
 
-    const trimmedName = typeof name === 'string' ? name.trim() : '';
-    const trimmedUrl  = typeof url  === 'string' ? url.trim()  : '';
+    const trimmedName = typeof name === "string" ? name.trim() : "";
+    const trimmedUrl = typeof url === "string" ? url.trim() : "";
 
-    if (trimmedName === '' || trimmedUrl === '') {
-      if (warningEl) warningEl.classList.remove('hidden');
+    if (trimmedName === "" || trimmedUrl === "") {
+      if (warningEl) warningEl.classList.remove("hidden");
       return;
     }
 
@@ -834,28 +920,28 @@ const LinksModule = {
     try {
       parsed = new URL(normalized);
     } catch {
-      if (warningEl) warningEl.classList.remove('hidden');
+      if (warningEl) warningEl.classList.remove("hidden");
       return;
     }
 
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-      if (warningEl) warningEl.classList.remove('hidden');
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      if (warningEl) warningEl.classList.remove("hidden");
       return;
     }
 
     const link = {
-      id:   this._generateId(),
+      id: this._generateId(),
       name: trimmedName,
-      url:  normalized,
+      url: normalized,
     };
 
     this.links.push(link);
     this.saveLinks();
     this.renderAll();
 
-    if (nameInputEl) nameInputEl.value = '';
-    if (urlInputEl)  urlInputEl.value  = '';
-    if (warningEl)   warningEl.classList.add('hidden');
+    if (nameInputEl) nameInputEl.value = "";
+    if (urlInputEl) urlInputEl.value = "";
+    if (warningEl) warningEl.classList.add("hidden");
   },
 
   /**
@@ -875,21 +961,21 @@ const LinksModule = {
    * Called once from init() before renderAll().
    */
   _bindEvents() {
-    const addBtn      = document.getElementById('link-add-btn');
-    const nameInputEl = document.getElementById('link-name-input');
-    const urlInputEl  = document.getElementById('link-url-input');
-    const list        = document.getElementById('link-list');
+    const addBtn = document.getElementById("link-add-btn");
+    const nameInputEl = document.getElementById("link-name-input");
+    const urlInputEl = document.getElementById("link-url-input");
+    const list = document.getElementById("link-list");
 
     if (addBtn) {
-      addBtn.addEventListener('click', () => {
-        const name = nameInputEl ? nameInputEl.value : '';
-        const url  = urlInputEl  ? urlInputEl.value  : '';
+      addBtn.addEventListener("click", () => {
+        const name = nameInputEl ? nameInputEl.value : "";
+        const url = urlInputEl ? urlInputEl.value : "";
         this.addLink(name, url);
       });
     }
 
     if (list) {
-      list.addEventListener('click', (e) => {
+      list.addEventListener("click", (e) => {
         const btn = e.target.closest('[data-action="delete"]');
         if (!btn) return;
         this.deleteLink(btn.dataset.id);
@@ -915,8 +1001,8 @@ const ThemeModule = {
    * @returns {"dark"|"light"}
    */
   loadTheme() {
-    const val = safeGet('tl_theme', 'light');
-    return val === 'dark' ? 'dark' : 'light';
+    const val = safeGet("tl_theme", "light");
+    return val === "dark" ? "dark" : "light";
   },
 
   /**
@@ -924,7 +1010,7 @@ const ThemeModule = {
    * @param {"dark"|"light"} theme
    */
   saveTheme(theme) {
-    safeSet('tl_theme', theme);
+    safeSet("tl_theme", theme);
   },
 
   /**
@@ -935,14 +1021,14 @@ const ThemeModule = {
    */
   apply(theme) {
     const html = document.documentElement;
-    const btn  = document.getElementById('theme-toggle-btn');
+    const btn = document.getElementById("theme-toggle-btn");
 
-    if (theme === 'dark') {
-      html.classList.add('dark');
-      if (btn) btn.textContent = '☀️ Light';
+    if (theme === "dark") {
+      html.classList.add("dark");
+      if (btn) btn.textContent = "☀️ Light";
     } else {
-      html.classList.remove('dark');
-      if (btn) btn.textContent = '🌙 Dark';
+      html.classList.remove("dark");
+      if (btn) btn.textContent = "🌙 Dark";
     }
   },
 
@@ -951,8 +1037,10 @@ const ThemeModule = {
    * then persists and applies the new value.
    */
   toggle() {
-    const current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-    const next    = current === 'dark' ? 'light' : 'dark';
+    const current = document.documentElement.classList.contains("dark")
+      ? "dark"
+      : "light";
+    const next = current === "dark" ? "light" : "dark";
     this.saveTheme(next);
     this.apply(next);
   },
@@ -964,8 +1052,8 @@ const ThemeModule = {
   init() {
     this.apply(this.loadTheme());
 
-    const btn = document.getElementById('theme-toggle-btn');
-    if (btn) btn.addEventListener('click', () => this.toggle());
+    const btn = document.getElementById("theme-toggle-btn");
+    if (btn) btn.addEventListener("click", () => this.toggle());
   },
 };
 
@@ -973,8 +1061,8 @@ const ThemeModule = {
 // Bootstrap — initialise all modules after DOM is ready
 // ============================================================
 
-document.addEventListener('DOMContentLoaded', () => {
-  ThemeModule.init();   // must be first — prevents flash of unstyled content
+document.addEventListener("DOMContentLoaded", () => {
+  ThemeModule.init(); // must be first — prevents flash of unstyled content
   GreetingModule.init();
   TimerModule.init();
   TodoModule.init();
