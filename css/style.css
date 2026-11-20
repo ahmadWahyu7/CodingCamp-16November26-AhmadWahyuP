@@ -1,0 +1,103 @@
+/* ==========================================================
+   CSS Custom Properties — Task 3.1
+   ========================================================== */
+:root {
+  --color-bg-light:   #F7E5C1;
+  --color-text-light: #1C393F;
+  --color-bg-dark:    #1C393F;
+  --color-text-dark:  #F7E5C1;
+}
+
+/* ==========================================================
+   Base Styles — Task 3.2
+   ========================================================== */
+
+/* Font Lato as default body font (Req 11.1) */
+body {
+  font-family: 'Lato', sans-serif;
+  background-color: var(--color-bg-light);
+  color: var(--color-text-light);
+}
+
+/* Font Luckiest Guy for timer display (Req 11.2) */
+#timer-display {
+  font-family: 'Luckiest Guy', cursive;
+}
+
+/* Theme transition — smooth swap in < 300ms (Req 8.2) */
+*,
+*::before,
+*::after {
+  transition: background-color 150ms ease, color 150ms ease,
+              border-color 150ms ease, box-shadow 150ms ease;
+}
+
+/* Dark mode — applied by toggling .dark on <html> */
+.dark body {
+  background-color: var(--color-bg-dark);
+  color: var(--color-text-dark);
+}
+
+/* ==========================================================
+   Card Component — Task 3.2 (Req 11.3, 11.4)
+   border-radius ≥ 8px, box-shadow for depth
+   ========================================================== */
+.card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 1rem; /* minimum 16px */
+}
+
+/* Light mode card surface */
+.card {
+  background-color: rgba(255, 255, 255, 0.55);
+}
+
+/* Dark mode card surface */
+.dark .card {
+  background-color: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* ==========================================================
+   Timer Complete Notification Animation — Task 3.3 (Req 11.5)
+   ========================================================== */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#timer-complete-notification:not(.hidden) {
+  animation: fadeSlideIn 250ms ease forwards;
+}
+
+/* ==========================================================
+   Spacing utilities — Task 3.3 (Req 11.5)
+   Minimum 16px padding on cards, 16px gap between sections
+   ========================================================== */
+.section-gap {
+  margin-top: 1rem;   /* 16px */
+  margin-bottom: 1rem;
+}
+
+/* Ensure inputs and buttons retain readable contrast in both themes */
+input,
+textarea,
+select {
+  color: var(--color-text-light);
+  background-color: #fff;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  color: var(--color-text-dark);
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(247, 229, 193, 0.3);
+}

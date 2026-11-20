@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To-Do List Life Dashboard</title>
+
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Tailwind Configuration — Task 3.1 / 8.3 -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            /* Brand palette — matches CSS custom properties in style.css */
+            'brand-light-bg':   '#F7E5C1',
+            'brand-light-text': '#1C393F',
+            'brand-dark-bg':    '#1C393F',
+            'brand-dark-text':  '#F7E5C1',
+            /* Alias names matching CSS variable names for convenience */
+            'color-bg-light':   '#F7E5C1',
+            'color-text-light': '#1C393F',
+            'color-bg-dark':    '#1C393F',
+            'color-text-dark':  '#F7E5C1',
+          },
+          fontFamily: {
+            lato:       ['Lato', 'sans-serif'],
+            luckiest:   ['"Luckiest Guy"', 'cursive'],
+          },
+        },
+      },
+    }
+  </script>
+
+  <!-- Google Fonts: Lato (400 & 700) + Luckiest Guy -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Luckiest+Guy&display=swap" rel="stylesheet">
+
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="font-lato bg-brand-light-bg text-brand-light-text dark:bg-brand-dark-bg dark:text-brand-dark-text min-h-screen">
+
+  <!-- ===== HEADER / NAVBAR ===== -->
+  <header class="flex items-center justify-end px-4 py-2 bg-brand-light-bg dark:bg-brand-dark-bg">
+    <button
+      id="theme-toggle-btn"
+      class="min-h-[44px] min-w-[44px] flex items-center justify-center px-4 rounded-lg font-bold
+             bg-brand-light-text text-brand-light-bg dark:bg-brand-dark-text dark:text-brand-dark-bg"
+      aria-label="Toggle tema"
+    >
+      🌙 Dark
+    </button>
+  </header>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="px-4 pb-8 max-w-5xl mx-auto space-y-6">
+
+    <!-- ===== GREETING SECTION (2.2) ===== -->
+    <section id="greeting-section" class="card p-4 rounded-xl shadow
+              bg-white/50 dark:bg-white/5
+              text-brand-light-text dark:text-brand-dark-text">
+
+      <!-- Clock & date -->
+      <div class="text-center mb-4">
+        <p id="clock-display" class="text-4xl font-bold tabular-nums">00:00:00</p>
+        <p id="date-display" class="text-lg mt-1">—</p>
+        <span id="clock-error" class="hidden text-red-500 dark:text-red-400 text-sm mt-1 block">
+          ⚠ Pembaruan waktu terhenti
+        </span>
+      </div>
+
+      <!-- Greeting text -->
+      <p id="greeting-text" class="text-2xl font-bold text-center mb-4">Selamat Datang!</p>
+
+      <!-- Name input -->
+      <div class="flex flex-col sm:flex-row gap-2 justify-center">
+        <input
+          id="name-input"
+          type="text"
+          maxlength="50"
+          placeholder="Masukkan nama Anda…"
+          class="flex-1 max-w-xs px-3 py-2 rounded-lg border bg-white text-brand-light-text border-brand-light-text/30 dark:bg-white/10 dark:text-brand-dark-text dark:border-brand-dark-text/30"
+        >
+        <button
+          id="name-save-btn"
+          class="min-h-[44px] px-4 rounded-lg font-semibold bg-brand-light-text text-brand-light-bg dark:bg-brand-dark-text dark:text-brand-dark-bg"
+        >
+          Simpan
+        </button>
+      </div>
+
+    </section>
+
+    <!-- ===== TIMER + TODO GRID ===== -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- ===== FOCUS TIMER (2.3) ===== -->
+      <section id="timer-section" class="card p-4 rounded-xl shadow
+                bg-white/50 dark:bg-white/5
+                text-brand-light-text dark:text-brand-dark-text">
+        <h2 class="text-xl font-bold mb-4">⏱ Focus Timer</h2>
+
+        <!-- Timer display (Luckiest Guy font applied via CSS) -->
+        <p id="timer-display" class="text-6xl text-center font-luckiest tabular-nums mb-4">25:00</p>
+
+        <!-- Timer controls -->
+        <div class="flex gap-2 justify-center mb-4">
+          <button id="timer-start-btn" class="min-h-[44px] min-w-[44px] px-4 rounded-lg font-semibold bg-brand-light-text text-brand-light-bg dark:bg-brand-dark-text dark:text-brand-dark-bg">▶ Start</button>
+          <button id="timer-stop-btn"  class="min-h-[44px] min-w-[44px] px-4 rounded-lg font-semibold bg-brand-light-text text-brand-light-bg dark:bg-brand-dark-text dark:text-brand-dark-bg">⏸ Stop</button>
+          <button id="timer-reset-btn" class="min-h-[44px] min-w-[44px] px-4 rounded-lg font-semibold bg-brand-light-text text-brand-light-bg dark:bg-brand-dark-text dark:text-brand-dark-bg">↺ Reset</button>
+        </div>
+
+        <!-- Duration setting -->
+        <div class="flex flex-col gap-2">
+          <label for="timer-duration-input" class="text-sm font-semibold">Durasi (menit, 1–120):</label>
+          <div class="flex gap-2">
+            <input
+              id="timer-duration-input"
+              type="number"
+              min="1"
+              max="120"
+              placeholder="25"
+              class="w-24 px-3 py-2 rounded-lg border bg-white text-brand-light-text border-brand-light-text/30 dark:bg-white/10 dark:text-brand-dark-text dark:border-brand-dark-text/30"
+            >
+            <button
+              id="timer-save-duration-btn"
+              class="min-h-[44px] px-4 rounded-lg font-semibold bg-brand-light-text text-brand-light-bg dark:bg-brand-dark-text dark:text-brand-dark-bg"
+            >
+              Simpan
+            </button>
+          </div>
+          <span id="timer-duration-error" class="hidden text-red-500 dark:text-red-400 text-sm">
+            ⚠ Durasi harus antara 1 dan 120 menit.
+          </span>
+        </div>
+
+        <!-- Timer complete notification -->
+        <div id="timer-complete-notification" class="hidden mt-4 p-3 rounded-lg text-center
+             bg-brand-light-text text-brand-light-bg dark:bg-brand-dark-text dark:text-brand-dark-bg">
+          <p class="font-bold mb-2">🎉 Sesi selesai!</p>
+          <button
+            id="timer-dismiss-btn"
+            class="min-h-[44px] px-4 rounded-lg font-semibold bg-brand-light-bg text-brand-light-text dark:bg-brand-dark-bg dark:text-brand-dark-text"
+          >
+            Tutup
+          </button>
+        </div>
+
+      </section>
+
+      <!-- ===== TO-DO LIST (2.4) ===== -->
+      <section id="todo-section" class="card p-4 rounded-xl shadow
+                bg-white/50 dark:bg-white/5
+                text-brand-light-text dark:text-brand-dark-text">
+        <h2 class="text-xl font-bold mb-4">✅ To-Do List</h2>
+
+        <!-- Add task input -->
+        <div class="flex gap-2 mb-2">
+          <input
+            id="todo-input"
+            type="text"
+            maxlength="200"
+            placeholder="Tambahkan tugas baru…"
+            class="flex-1 px-3 py-2 rounded-lg border bg-white text-brand-light-text border-brand-light-text/30 dark:bg-white/10 dark:text-brand-dark-text dark:border-brand-dark-text/30"
+          >
+          <button
+            id="todo-add-btn"
+            class="min-h-[44px] min-w-[44px] px-4 rounded-lg font-semibold bg-brand-light-text text-brand-light-bg dark:bg-brand-dark-text dark:text-brand-dark-bg"
+          >
+            + Tambah
+          </button>
+        </div>
+
+        <span id="todo-empty-warning" class="hidden text-red-500 dark:text-red-400 text-sm mb-2 block">
+          ⚠ Tugas tidak boleh kosong.
+        </span>
+
+        <!-- Task list container -->
+        <ul id="todo-list" class="space-y-2 mt-2"></ul>
+
+      </section>
+
+    </div><!-- end grid -->
+
+    <!-- ===== QUICK LINKS (2.5) ===== -->
+    <section id="links-section" class="card p-4 rounded-xl shadow
+              bg-white/50 dark:bg-white/5
+              text-brand-light-text dark:text-brand-dark-text">
+      <h2 class="text-xl font-bold mb-4">🔗 Quick Links</h2>
+
+      <!-- Add link inputs -->
+      <div class="flex flex-col sm:flex-row gap-2 mb-2">
+        <input
+          id="link-name-input"
+          type="text"
+          maxlength="50"
+          placeholder="Nama (contoh: GitHub)"
+          class="flex-1 px-3 py-2 rounded-lg border bg-white text-brand-light-text border-brand-light-text/30 dark:bg-white/10 dark:text-brand-dark-text dark:border-brand-dark-text/30"
+        >
+        <input
+          id="link-url-input"
+          type="url"
+          maxlength="2000"
+          placeholder="URL (contoh: github.com)"
+          class="flex-1 px-3 py-2 rounded-lg border bg-white text-brand-light-text border-brand-light-text/30 dark:bg-white/10 dark:text-brand-dark-text dark:border-brand-dark-text/30"
+        >
+        <button
+          id="link-add-btn"
+          class="min-h-[44px] min-w-[44px] px-4 rounded-lg font-semibold whitespace-nowrap bg-brand-light-text text-brand-light-bg dark:bg-brand-dark-text dark:text-brand-dark-bg"
+        >
+          + Tambah
+        </button>
+      </div>
+
+      <span id="link-warning" class="hidden text-red-500 dark:text-red-400 text-sm mb-2 block">
+        ⚠ Nama dan URL tidak boleh kosong.
+      </span>
+
+      <!-- Links container -->
+      <div id="link-list" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-2"></div>
+
+    </section>
+
+  </main>
+
+  <script defer src="js/app.js"></script>
+</body>
+</html>
