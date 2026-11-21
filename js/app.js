@@ -838,15 +838,14 @@ const LinksModule = {
   renderLink(link) {
     const card = document.createElement("div");
     card.className =
-      "flex items-center justify-between gap-2 p-3 rounded-lg bg-white/30 dark:bg-white/10";
+      "flex items-center justify-between gap-2 p-3 rounded-lg bg-white/30 border border-color-bg-dark dark:bg-white/10";
 
     const anchor = document.createElement("a");
     anchor.href = link.url;
     anchor.target = "_blank";
     anchor.rel = "noopener noreferrer";
     anchor.textContent = link.name;
-    anchor.className =
-      "flex-1 truncate font-semibold underline underline-offset-2";
+    anchor.className = "flex-1 truncate font-semibold";
 
     const deleteBtn = document.createElement("button");
     deleteBtn.dataset.action = "delete";
@@ -854,7 +853,7 @@ const LinksModule = {
     deleteBtn.className =
       "min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg font-semibold";
     deleteBtn.setAttribute("aria-label", "Hapus pintasan");
-    deleteBtn.textContent = "🗑️";
+    deleteBtn.textContent = "X";
 
     card.appendChild(anchor);
     card.appendChild(deleteBtn);
